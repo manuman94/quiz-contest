@@ -1,4 +1,8 @@
 import { Controller } from "../models/Controller";
+import { Question } from "../models/Question";
+import { QuestionOption } from "../models/QuestionOption";
+import { QuestionOptionVote } from "../models/QuestionOptionVote";
+import { Quiz } from "../models/Quiz";
 import { Team } from "../models/Team";
 import { Teams } from "../models/Teams";
 
@@ -46,4 +50,36 @@ export function getDefaultTeams(): Team[] {
             score: 0,
         },
     ] as Team[];
+}
+
+export function getDefaultQuiz(): Quiz {
+    return {
+        questions: [
+            {
+                text: "Cast your votes",
+                options: [
+                    {
+                        text: "A",
+                        votes: [
+                            {
+                                team: getDefaultTeams()[0],
+                            }
+                        ],
+                    } as QuestionOption,
+                    {
+                        text: "B",
+                        votes: [],
+                    } as QuestionOption,
+                    {
+                        text: "C",
+                        votes: [],
+                    } as QuestionOption,
+                    {
+                        text: "D",
+                        votes: [],
+                    } as QuestionOption,
+                ] as QuestionOption[],
+            } as Question,
+        ] as Question[],
+    } as Quiz;
 }

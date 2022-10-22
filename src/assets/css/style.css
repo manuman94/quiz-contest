@@ -115,6 +115,15 @@ Author      : jthemes (https://themeforest.net/user/jthemes)
   cursor: pointer;
   border-radius: 0.625rem;
 }
+.form_items label > .optionColor {
+  display:block;
+  position: absolute;
+  top:0;
+  left:0;
+  width:10%;
+  height:100%;
+  border-radius: 0.3rem 0 0 0.3rem;
+}
 .form_items label:before {
   content: "";
   top: 50%;
@@ -373,4 +382,27 @@ button {
     width: 40%;
     font-size: 0.5rem;
   }
+}
+
+/* 
+CUSTOM
+*/
+
+.globalmarkers {
+  position: fixed;
+  bottom: 15px;
+  left: 15px;
+}
+
+.globalmarkers .teamAnwseredMarker {
+  display:inline-block;
+  margin-left: 5px;
+}
+
+.globalmarkers .teamAnwseredMarker.pending {
+  opacity: 0.2;
+}
+
+.globalmarkers .teamAnwseredMarker i {
+  font-size: 4em;
 }
