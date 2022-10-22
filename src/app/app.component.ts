@@ -1,5 +1,7 @@
 import { Component } from '@angular/core';
-import { GamepadService } from './services/gamepad.service';
+import { getDefaultControllers, getDefaultTeams } from './data/DefaultValues';
+import { GameState } from './models/GameState';
+import { BuzzGamepadService } from './services/buzz-gamepad.service';
 
 @Component({
   selector: 'app-root',
@@ -8,12 +10,29 @@ import { GamepadService } from './services/gamepad.service';
 })
 export class AppComponent {
 
+  gameState: GameState;
+
   constructor(
-    private gamepadService: GamepadService
-  ){}
+    private buzzGamepadService: BuzzGamepadService
+  ){
+    this.gameState = {
+      controllers: getDefaultControllers(),
+      state: 'waiting-for-teams',
+      teams: getDefaultTeams(),
+    };
+  }
 
   ngOnInit() {
-    this.gamepadService.listenToGamepad();
+    this.buzzGamepadService.listenToGamepad().then(() => {
+      this.buzzGamepadService.buttonReleaseEvents.subscribe({
+        next(x) {
+          console.log('Got event ', x);
+        },
+        error(err) {
+          console.error('something wrong occurred: ' + err);
+        },
+      });
+    });
   }
 
 }

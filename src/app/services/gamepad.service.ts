@@ -1,56 +1,41 @@
 import { Injectable } from '@angular/core';
 
 import { GamepadService as ngGamepad } from 'ngx-gamepad';
-import { map, merge, Observable } from 'rxjs';
+import { map, merge, Observable, tap } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
 })
 export class GamepadService {
 
-  BUTTON_MAPPING = {
-    button0: {
-      
-    }
-  };
-
   TOTAL_BUTTON_COUNT = 20;
 
-  buttonReleaseEvents: Observable<string> = new Observable<string>();
+  buttonReleaseEvents: Observable<number> = new Observable<number>();
 
   constructor(
     private gamepad: ngGamepad
   ){}
 
-  public listenToGamepad() {
-    this.gamepad.connect()
-      .subscribe(() => {
-        this.setupButtonEvents();
-        this.subscribeToGamepadEvents();
-      });
+  public listenToGamepad(): Promise<void> {
+    return new Promise((resolve) => {
+      this.gamepad.connect()
+        .subscribe(() => {
+          this.setupButtonEvents();
+          resolve();
+        });
+    });
   }
 
   private setupButtonEvents() {
-    let buttonReleaseObservables: Array<Observable<string>> = [];
+    let buttonReleaseObservables: Array<Observable<number>> = [];
     for ( let i = 0; i < this.TOTAL_BUTTON_COUNT; i++ ) {
       const buttonTag = "button" + i;
-      buttonReleaseObservables.push(this.gamepad.after(buttonTag).pipe(map(() => buttonTag)));
+      buttonReleaseObservables.push(this.gamepad.after(buttonTag).pipe(map(() => i)));
     }
     this.buttonReleaseEvents = merge(...buttonReleaseObservables);
   }
 
-  private subscribeToGamepadEvents()
-  {
-    this.buttonReleaseEvents.subscribe({
-      next(x) {
-        console.log('Button released ' + x);
-      },
-      error(err) {
-        console.error('something wrong occurred: ' + err);
-      },
-      complete() {
-        console.log('done');
-      },
-    });
+  public getEvents() {
+    return this.buttonReleaseEvents;
   }
 }
