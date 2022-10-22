@@ -1,7 +1,7 @@
 import { Controller } from "./Controller";
 
 export interface Team {
-    name: String;
+    name: string;
     controller: Controller;
     score: number;
 }

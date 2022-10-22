@@ -15,7 +15,7 @@
         <!-- Countdown timer -->
         <div class="form_timer d-flex flex-column rounded-pill position-absolute countdown_timer">
           <img src="./assets/images/clock/clock.png" alt="image-not-found">
-          <span class="text-white"> {{ (timer$ | async) }} </span>
+          <span class="text-white"> {{ (questionTimer$ | async) }} </span>
         </div>
         <!-- / Countdown timer -->
         <!-- Question title -->
@@ -45,6 +45,13 @@
   </div>
   <!-- General markers -->
   <div class="globalmarkers">
-    <div *ngFor="let team of gameState.teams;" class="teamAnwseredMarker" [ngClass]="{ pending: !hasTeamAnsweredCurrentQuestion(team) }"> <i class="fa fa-question-circle" aria-hidden="true"></i> </div>
+    <h2> Votos pendientes </h2>
+    <div *ngFor="let team of gameState.teams;" class="teamAnwseredMarker" [ngClass]="{ pending: !hasTeamAnsweredCurrentQuestion(team) }"> 
+      <i class="fa fa-question-circle" aria-hidden="true"></i> 
+      <ng-lottie class="teamAnsweredAnimation" (animationCreated)="teamAnsweredAnimationCreated($event, team.name)" [options]="lottieOptions" width="200px" height="200px"></ng-lottie>
+    </div>
+    <!-- <div (click)="startTimer()"> Start timer </div>
+    <div (click)="pauseTimer()"> Pause timer </div>
+    <div (click)="stopTimer()"> Stop timer</div> -->
   </div>
 </div>

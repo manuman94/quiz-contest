@@ -5,6 +5,12 @@ import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 
 import { NgxGamepadModule } from 'ngx-gamepad';
+import { LottieModule } from 'ngx-lottie';
+import player from 'lottie-web';
+
+export function playerFactory() {
+  return player;
+}
 
 @NgModule({
   declarations: [
@@ -14,6 +20,7 @@ import { NgxGamepadModule } from 'ngx-gamepad';
     BrowserModule,
     AppRoutingModule,
     NgxGamepadModule,
+    LottieModule.forRoot({ player: playerFactory }),
   ],
   providers: [],
   bootstrap: [AppComponent]

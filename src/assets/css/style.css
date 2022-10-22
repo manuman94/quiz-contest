@@ -396,13 +396,20 @@ CUSTOM
 
 .globalmarkers .teamAnwseredMarker {
   display:inline-block;
+  position: relative;
   margin-left: 5px;
 }
 
-.globalmarkers .teamAnwseredMarker.pending {
+.globalmarkers .teamAnwseredMarker.pending i {
   opacity: 0.2;
 }
 
 .globalmarkers .teamAnwseredMarker i {
   font-size: 4em;
+}
+
+.teamAnsweredAnimation {
+  position: absolute;
+  bottom: -55px;
+  left: -70px;
 }

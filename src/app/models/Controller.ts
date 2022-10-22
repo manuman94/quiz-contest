@@ -1,6 +1,7 @@
 import { BuzzControllerButton } from "./BuzzControllerButton";
+import { Team } from "./Team";
 
 export interface Controller {
-    team: String;
+    team?: Team;
     buttonOffset: number;
 }
