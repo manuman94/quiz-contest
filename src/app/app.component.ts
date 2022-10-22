@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+import { GamepadService } from './services/gamepad.service';
 
 @Component({
   selector: 'app-root',
@@ -6,5 +7,13 @@ import { Component } from '@angular/core';
   styleUrls: ['./app.component.scss']
 })
 export class AppComponent {
-  title = 'quiz-contest';
+
+  constructor(
+    private gamepadService: GamepadService
+  ){}
+
+  ngOnInit() {
+    this.gamepadService.listenToGamepad();
+  }
+
 }
