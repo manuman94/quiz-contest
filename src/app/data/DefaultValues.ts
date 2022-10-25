@@ -1,7 +1,6 @@
 import { Controller } from "../models/Controller";
 import { Question } from "../models/Question";
 import { QuestionOption } from "../models/QuestionOption";
-import { QuestionOptionVote } from "../models/QuestionOptionVote";
 import { Quiz } from "../models/Quiz";
 import { Team } from "../models/Team";
 import { Teams } from "../models/Teams";
@@ -25,21 +24,25 @@ const defaultTeams: Team[] = [
     {
         controller: getDefaultControllers()[0],
         name: Teams.ONE,
+        icon: 'pumpkin.png',
         score: 0,
     },
     {
         controller: getDefaultControllers()[1],
         name: Teams.TWO,
+        icon: 'bat.png',
         score: 0,
     },
     {
         controller: getDefaultControllers()[2],
         name: Teams.THREE,
+        icon: 'skull.png',
         score: 0,
     },
     {
         controller: getDefaultControllers()[3],
         name: Teams.FOUR,
+        icon: 'ghost.png',
         score: 0,
     },
 ] as Team[];
@@ -74,6 +77,7 @@ export function getDefaultQuiz(): Quiz {
                     {
                         text: "Edgar Allan Poe",
                         votes: [],
+                        correct: true,
                     } as QuestionOption,
                     {
                         text: "Oscar Wilde",
@@ -91,6 +95,7 @@ export function getDefaultQuiz(): Quiz {
                     {
                         text: "Pesadilla Antes de Navidad",
                         votes: [],
+                        correct: true,
                     } as QuestionOption,
                     {
                         text: "El regreso de las Brujas",

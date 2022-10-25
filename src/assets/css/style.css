@@ -66,10 +66,6 @@ Author      : jthemes (https://themeforest.net/user/jthemes)
   background: linear-gradient(#fe6300, #ffae15);
 }
 
-.multisteps_form_panel {
-  display: none;
-}
-
 .content_box {
   width: 50%;
   height: 15rem;
@@ -412,4 +408,34 @@ CUSTOM
   position: absolute;
   bottom: -55px;
   left: -70px;
+}
+
+.results-container {
+  font-size: 30px;
+}
+
+.results-container > h1 {
+  color: white;
+}
+
+#winnerAnimation {
+  display: inline-block;
+  width: 50px;
+}
+
+.voteIconsContainer {
+  position: absolute;
+  right: 10px;
+  top: 10px;
+}
+
+.voteIcon {
+  width: 50px;
+  height: 50px;
+}
+
+.readyIcon {
+  width: 100px;
+  margin: auto;
+  display: block;
 }

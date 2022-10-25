@@ -7,6 +7,7 @@ import { AppComponent } from './app.component';
 import { NgxGamepadModule } from 'ngx-gamepad';
 import { LottieModule } from 'ngx-lottie';
 import player from 'lottie-web';
+import {BrowserAnimationsModule} from '@angular/platform-browser/animations';
 
 export function playerFactory() {
   return player;
@@ -18,6 +19,7 @@ export function playerFactory() {
   ],
   imports: [
     BrowserModule,
+    BrowserAnimationsModule,
     AppRoutingModule,
     NgxGamepadModule,
     LottieModule.forRoot({ player: playerFactory }),

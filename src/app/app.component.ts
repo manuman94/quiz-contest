@@ -1,8 +1,9 @@
+import { animate, style, transition, trigger } from '@angular/animations';
 import { Component, NgZone } from '@angular/core';
 import { AnimationItem } from 'lottie-web';
 import * as moment from 'moment';
 import { AnimationOptions } from 'ngx-lottie';
-import { EMPTY, from, interval, map, merge, Observable, repeat, scan, startWith, Subject, switchMap, takeUntil, takeWhile, tap } from 'rxjs';
+import { map, merge, Observable, of } from 'rxjs';
 import { getDefaultControllers, getDefaultQuiz, getDefaultTeams } from './data/DefaultValues';
 import { ButtonColors } from './models/ButtonColors';
 import { BuzzControllerButton } from './models/BuzzControllerButton';
@@ -10,16 +11,58 @@ import { BuzzControllerButtonEvent } from './models/BuzzControllerButtonEvent';
 import { GameState } from './models/GameState';
 import { GameStatus } from './models/GameStatus';
 import { IHash } from './models/IHash';
+import { Question } from './models/Question';
 import { QuestionOptionVote } from './models/QuestionOptionVote';
 import { Team } from './models/Team';
 import { BuzzGamepadService } from './services/buzz-gamepad.service';
+import { MusicService } from './services/music.service';
+import { TimerService } from './services/timer.service';
+
+const enterTransition = transition(':enter', [
+  style({
+    opacity: 0
+  }),
+  animate('1s ease-in', style({
+    opacity: 1
+  }))
+]);
+
+const leaveTrans = transition(':leave', [
+  style({
+    opacity: 1
+  }),
+  animate('1s ease-out', style({
+    opacity: 0
+  }))
+])
+
+const fadeIn = trigger('fadeIn', [
+  enterTransition
+]);
+
+const fadeOut = trigger('fadeOut', [
+  leaveTrans
+]);
 
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
-  styleUrls: ['./app.component.scss']
+  styleUrls: ['./app.component.scss'],
+  animations: [
+    fadeIn,
+    fadeOut
+  ],
 })
 export class AppComponent {
+  readonly GameStatus = GameStatus;
+
+  QUESTION_TIME: number = 30;
+  REVIEW_ANSWER_TIMER: number = 10;
+  SCORE_EARNED_BY_RIGHT_GUESS: number = 25;
+
+  visualTimer$?: Observable<string>;
+
+  currentQuestionIndex: number = 0;
 
   lottieOptions: AnimationOptions = {
     path: './assets/animations/votecasted.json',
@@ -30,15 +73,11 @@ export class AppComponent {
   teamAnsweredAnimationItems?:IHash<AnimationItem> = {};
 
   gameState: GameState;
-  questionTimer$?: Observable<string>;
-  questionTimerInternal?: Observable<string>;
-
-  private readonly _stopTimer = new Subject<void>();
-  private readonly _pauseTimer = new Subject<void>();
-  private readonly _startTimer = new Subject<void>();
 
   constructor(
     private buzzGamepadService: BuzzGamepadService,
+    private musicService: MusicService,
+    private timerService: TimerService,
     public ngZone: NgZone,
   ){
     this.gameState = {
@@ -47,16 +86,25 @@ export class AppComponent {
       question_state: 'waiting-votes',
       teams: getDefaultTeams(),
       quiz: getDefaultQuiz(),
-      currentQuestion: getDefaultQuiz().questions[0],
+      currentQuestion: getDefaultQuiz().questions[this.currentQuestionIndex],
     };
   }
 
   ngOnInit() {
-    this.setupTimer();
+    this.startAudio();
     this.setupGamepad();
-    setTimeout(() => {
-      this.startGame();
-    }, 2000);
+    this.startGame();
+  }
+
+  /**
+   * Timer functions
+   */
+  private syncVisualTimer() {
+    this.visualTimer$ = merge(this.timerService.getTimer()).pipe(map(this.formatSecondsToMMSS));
+  }
+
+  private stopSyncingVisualTimer() {
+    this.visualTimer$ = of("00:00");
   }
 
   /**
@@ -82,31 +130,80 @@ export class AppComponent {
 
   private handleGamepadEvent(controllerButtonEvent: BuzzControllerButtonEvent) {
     const appComponent = this;
-    if ( appComponent.isOptionButton(controllerButtonEvent.button) ) {
-      const team = controllerButtonEvent.controller.team;
+    if ( this.gameState.state === GameStatus['waiting-for-teams'] ) {
       appComponent.ngZone.run(() => {
-        if ( !appComponent.hasTeamAnsweredCurrentQuestion(team!) ) {
-          const selectedOption = appComponent.buzzButtonToOptionIndex(controllerButtonEvent.button.valueOf());
-          appComponent.gameState.currentQuestion.options[selectedOption].votes.push({ team: team } as QuestionOptionVote);
+        const team = controllerButtonEvent.controller.team;
+        team!.ready = true;
+        if ( appComponent.allTeamsAreReady() ) {
+          appComponent.onAllTeamsReady();
         }
       });
-      appComponent.ngZone.runOutsideAngular(() => {
-        console.log(appComponent.teamAnsweredAnimationItems);
-        appComponent.teamAnsweredAnimationItems![team!.name].play();
-      });
+    } else if ( this.gameState.state === GameStatus.playing ) {
+      if ( appComponent.isOptionButton(controllerButtonEvent.button) ) {
+        const team = controllerButtonEvent.controller.team;
+        appComponent.ngZone.run(() => {
+          if ( !appComponent.hasTeamAnsweredCurrentQuestion(team!) ) {
+            const selectedOption = appComponent.buzzButtonToOptionIndex(controllerButtonEvent.button.valueOf());
+            appComponent.gameState.currentQuestion.options[selectedOption].votes.push({ team: team } as QuestionOptionVote);
+            appComponent.ngZone.runOutsideAngular(() => {
+                appComponent.teamAnsweredAnimationItems![team!.name].goToAndPlay(0);
+            });
+          }
+        });
+      }
     }
+  }
+
+  /**
+   * Audio functions
+   */
+  private startAudio() {
+    this.musicService.start();
   }
 
   /**
    * Game state functions
    */
   private startGame() {
-    this.changeGameState(GameStatus.playing);
-    this.startQuestionsLoop();
+    this.changeGameState(GameStatus['waiting-for-teams']);
   }
   
   private startQuestionsLoop() {
     this.startQuestion();
+  }
+
+  private setCurrentQuestion(question: Question) {
+    this.gameState.currentQuestion = question;
+  }
+
+  private switchToNextQuestion() {
+    const appComponent = this;
+    this.gameState.currentQuestion.hidden = true;
+    this.timerService.startTimer(1).subscribe({
+      complete() {
+        appComponent.currentQuestionIndex++;
+        const nextQuestion = appComponent.gameState.quiz.questions[appComponent.currentQuestionIndex];
+        if ( typeof nextQuestion === 'undefined' ) {
+          appComponent.gameState.state = GameStatus['results-page'];
+        } else {
+          nextQuestion.hidden = false;
+          appComponent.setCurrentQuestion(nextQuestion);
+          appComponent.startQuestion();
+        }
+      }
+    });
+  }
+
+  private startAnswerReviewTime() {
+    const appComponent = this;
+    this.gameState.question_state = 'answer-review-time';
+    this.recalculateTeamScores();
+    this.timerService.startTimer(this.REVIEW_ANSWER_TIMER);
+    this.timerService.getTimer().subscribe({
+      complete() {
+        appComponent.onAnswerReviewTimeEnd();
+      }
+    });
   }
   
   private changeGameState(gameStatus: GameStatus) {
@@ -117,60 +214,29 @@ export class AppComponent {
    * Game Hook functions
    */
   private startQuestion() {
-    this.stopTimer();
-    this.startTimer();
-    console.log(this.questionTimer$);
-    // TODO
-    this.questionTimer$?.subscribe({
-      next(x) {
-        console.log('Timer next', x);
-      },
-      error(x) {
-        console.log('Timer error', x);
-      },
+    this.gameState.question_state = 'waiting-votes';
+    const appComponent = this;
+    this.timerService.startTimer(this.QUESTION_TIME);
+    this.syncVisualTimer();
+    this.timerService.getTimer().subscribe({
       complete() {
-        console.log('Timer complete');
+        appComponent.onQuestionEnd();
       }
     });
   }
 
-  /**
-   * Timer functions
-   */
-  private setupTimer() {
-    const startValue = 15;
-    
-    this.questionTimer$ = merge(this._startTimer.pipe(map(() => true)), this._pauseTimer.pipe(map(() => false)))
-      .pipe(
-        switchMap(shouldStart => (shouldStart ? interval(1000) : EMPTY)),
-        map((x) => -1),
-        scan((acc: number, curr: number) => acc + curr, startValue),
-        takeWhile(val => val >= 0),
-        startWith(startValue),
-        takeUntil(this._stopTimer),
-        repeat(),
-    ).pipe(map(this.formatSecondsToMMSS));
+  private onQuestionEnd() {
+    this.stopSyncingVisualTimer();
+    this.startAnswerReviewTime();
   }
 
-  startTimer() {
-    console.log("Start timer");
-    this.ngZone.run(() => {
-      this._startTimer.next();
-    });
+  private onAnswerReviewTimeEnd() {
+    this.switchToNextQuestion();
   }
 
-  pauseTimer() {
-    console.log("Pause timer");
-    this.ngZone.run(() => {
-      this._pauseTimer.next();
-    });
-  }
-  
-  stopTimer() {
-    console.log("Stop timer");
-    this.ngZone.run(() => {
-      this._stopTimer.next();
-    });
+  private onAllTeamsReady() {
+    this.changeGameState(GameStatus.playing);
+    this.startQuestionsLoop();
   }
 
   /**
@@ -183,6 +249,16 @@ export class AppComponent {
   /**
    * Helpers
    */
+  recalculateTeamScores() 
+  {
+    for ( let team of this.gameState.teams ) {
+      if ( this.hasTeamAnsweredQuestion(team, this.gameState.currentQuestion) && 
+           this.checkIfTeamVotedQuestionCorrectly(team, this.gameState.currentQuestion) ) {
+        team.score += this.SCORE_EARNED_BY_RIGHT_GUESS;
+      }
+    }
+  }
+
   getOptionColor(optionIndex: number): string {
     return "#" + Object.values(ButtonColors)[optionIndex];
   }
@@ -202,13 +278,44 @@ export class AppComponent {
       buzzControllerButton == BuzzControllerButton.ORANGE;
   }
 
-  hasTeamAnsweredCurrentQuestion(team: Team): boolean {
+  hasTeamAnsweredQuestion(team: Team, question: Question) {
     let voted = false;
-    for (let option of this.gameState.currentQuestion.options) {
+    for (let option of question.options) {
       voted = voted || (option.votes.filter((vote: QuestionOptionVote) => {
         return vote.team.name === team.name;
       }).length > 0)
     }
     return voted;
+  }
+
+  hasTeamAnsweredCurrentQuestion(team: Team): boolean {
+    return this.hasTeamAnsweredQuestion(team, this.gameState.currentQuestion);
+  }
+
+  checkIfTeamVotedQuestionCorrectly(team: Team, question: Question) {
+    for (let option of question.options) {
+      const chosenOption = option.votes.filter((vote: QuestionOptionVote) => {
+        return vote.team.name === team.name;
+      });
+      if ( chosenOption.length > 0 ) {
+        return option.correct;
+      }
+    }
+    return false;
+  }
+
+  orderTeamsByScore(): Team[] {
+    return this.gameState.teams.sort((a: Team, b: Team) => {
+      return b.score - a.score;
+    });
+  }
+
+  allTeamsAreReady(): boolean {
+    for ( let team of this.gameState.teams ) {
+      if ( team.ready !== true ) {
+        return false; 
+      }
+    }
+    return true;
   }
 }
