@@ -6,7 +6,6 @@ import { Team } from "./Team";
 
 export interface GameState {
     state: GameStatus;
-    question_state: 'waiting-votes' | 'answer-review-time';
     controllers: Controller[];
     teams: Team[];
     quiz: Quiz;
