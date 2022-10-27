@@ -15,6 +15,6 @@ export class MusicService {
     this.audio.src = "./assets/audio/music.mp3";
     this.audio.loop = true;
     this.audio.load();
-    // this.audio.play();
+    this.audio.play();
   }
 }

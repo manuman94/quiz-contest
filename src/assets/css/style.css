@@ -439,3 +439,10 @@ CUSTOM
   margin: auto;
   display: block;
 }
+
+.nextQuestionIn {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  font-size:40px;
+}

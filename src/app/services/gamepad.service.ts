@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 
 import { GamepadService as ngGamepad } from 'ngx-gamepad';
-import { map, merge, Observable, tap } from 'rxjs';
+import { map, merge, Observable, Subject } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
@@ -9,8 +9,9 @@ import { map, merge, Observable, tap } from 'rxjs';
 export class GamepadService {
 
   TOTAL_BUTTON_COUNT = 20;
+  alreadyListening = false;
 
-  buttonReleaseEvents: Observable<number> = new Observable<number>();
+  buttonReleaseEvents: Subject<number> = new Subject<number>();
 
   constructor(
     private gamepad: ngGamepad
@@ -20,7 +21,9 @@ export class GamepadService {
     return new Promise((resolve) => {
       this.gamepad.connect()
         .subscribe(() => {
-          this.setupButtonEvents();
+          if ( !this.alreadyListening ) {
+            this.setupButtonEvents();
+          }
           resolve();
         });
     });
@@ -32,7 +35,8 @@ export class GamepadService {
       const buttonTag = "button" + i;
       buttonReleaseObservables.push(this.gamepad.after(buttonTag).pipe(map(() => i)));
     }
-    this.buttonReleaseEvents = merge(...buttonReleaseObservables);
+    const eventObservable: Observable<number> = merge(...buttonReleaseObservables);
+    eventObservable.subscribe(this.buttonReleaseEvents);
   }
 
   public getEvents() {
