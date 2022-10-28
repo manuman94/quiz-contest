@@ -138,9 +138,9 @@ Author      : jthemes (https://themeforest.net/user/jthemes)
   -webkit-transition: all 0.4s ease-in-out;
   transition: all 0.4s ease-in-out;
 }
-.form_items label.active:before {
+/* .form_items label.active:before {
   display: block;
-}
+} */
 .form_items input {
   display: none;
 }
@@ -438,4 +438,15 @@ CUSTOM
   width: 100px;
   margin: auto;
   display: block;
+}
+
+.nextQuestionIn {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  font-size:40px;
+}
+
+#header-logo {
+  max-width: 150px;
 }

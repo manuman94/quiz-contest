@@ -3,7 +3,7 @@
   <div class="container">
     <div class="logo_area pt-5">
       <a href="index.html">
-        <img src="./assets/images/logo/logo.png" alt="image-not-found">
+        <img id="header-logo" src="./assets/images/logo/logo.png" alt="image-not-found">
       </a>
     </div>
   </div>
@@ -40,7 +40,8 @@
           <div class="form_items overflow-hidden">
             <ul class="list-unstyled text-center p-0">
               <li *ngFor="let option of gameState.currentQuestion.options; let i=index;">
-                <label class="step_1 position-relative bg-white animate__animated animate__fadeInRight animate_50ms" [ngClass]="{ active: option.correct && gameState['question_state'] === 'answer-review-time' }"
+                <label class="position-relative bg-white animate__animated animate__fadeInRight animate_50ms" 
+                  [ngClass]="{ active: option.correct && gameState.state === GameStatus['answer-review-time'] }"
                   for="opt_1"> {{ option.text }} 
                   <span class="voteIconsContainer" *ngIf="gameState['question_state'] === 'answer-review-time'">
                     <span *ngFor="let vote of option.votes">
